@@ -286,7 +286,6 @@ class FuelTrackerHome extends StatelessWidget {
         final screenWidth = constraints.maxWidth;
         final isPhone = screenWidth < 600;
         final isTablet = screenWidth >= 600 && screenWidth < 1000;
-        final isDesktop = screenWidth >= 1000;
         
         // Dynamic grid layout based on screen size
         final crossAxisCount = isPhone ? 2 : (isTablet ? 3 : 4);

@@ -133,21 +133,10 @@ class FuelProvider extends ChangeNotifier {
     debugPrint('🚫 Background loading disabled to preserve dummy data');
     return;
     
-    // Try to load from Firebase in background
-    try {
-      final entriesData = await _firebaseService.loadFuelEntries();
-      if (entriesData.isNotEmpty) {
-        _entries = entriesData.map((json) => FuelEntry.fromJson(json)).toList();
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint('Firebase load error: $e');
-      await _loadFromLocalStorage();
-    }
+    // Dead code removed
   }
 
   void _loadDummyData() {
-    final now = DateTime.now();
     debugPrint('🔄 Loading dummy data...');
 
     _entries = [
@@ -374,21 +363,6 @@ class FuelProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadFromLocalStorage() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final entriesJson = prefs.getString('fuel_entries');
-
-      if (entriesJson != null) {
-        final List<dynamic> decoded = jsonDecode(entriesJson);
-        _entries = decoded.map((json) => FuelEntry.fromJson(json)).toList();
-      } else {
-        _loadDummyData();
-      }
-    } catch (e) {
-      _loadDummyData();
-    }
-  }
 
   Future<void> _saveToLocalStorage() async {
     try {

@@ -15,7 +15,6 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
-  bool _isAscending = false;
 
   final List<Widget> _screens = [
     const SummaryScreen(),
@@ -26,7 +25,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isVerySmallScreen = screenWidth < 350;
-    final isSmallScreen = screenWidth < 400;
     
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -341,7 +339,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         });
                         // TODO: Update theme in provider
                       },
-                      activeColor: Colors.purple,
+                      activeThumbColor: Colors.purple,
                       activeTrackColor: Colors.purple.withValues(alpha: 0.3),
                       inactiveThumbColor: Colors.grey[400],
                       inactiveTrackColor: Colors.grey.withValues(alpha: 0.2),
@@ -631,7 +629,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ).then((selectedRange) {
       if (selectedRange != null) {
         if (selectedRange == DateRange.custom) {
-          _showAppleStyleDateRangeDialog(context, provider);
+          if (context.mounted) {
+            _showAppleStyleDateRangeDialog(context, provider);
+          }
         } else {
           provider.setDateRange(selectedRange);
         }
@@ -1092,224 +1092,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  Widget _buildPowerBIDateSelector(String label, DateTime date, IconData icon, Color color, VoidCallback onTap) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.1),
-            spreadRadius: 0,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: color,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: color,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${date.day}/${date.month}/${date.year}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      Text(
-                        _getWeekdayName(date.weekday),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.calendar_today_outlined,
-                  color: Colors.grey[400],
-                  size: 18,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  String _getWeekdayName(int weekday) {
-    const weekdays = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 
-      'Friday', 'Saturday', 'Sunday'
-    ];
-    return weekdays[weekday - 1];
-  }
 
-  Widget _buildDateChip(String label, DateTime date, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: color,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${date.day}/${date.month}/${date.year}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildPowerBIRangeSlider({
-    required DateTime earliestDate,
-    required DateTime latestDate,
-    required DateTime startDate,
-    required DateTime endDate,
-    required Function(DateTime, DateTime) onRangeChanged,
-  }) {
-    final totalDays = latestDate.difference(earliestDate).inDays;
-    final startDays = startDate.difference(earliestDate).inDays;
-    final endDays = endDate.difference(earliestDate).inDays;
 
-    return Column(
-      children: [
-        // Timeline visualization
-        Container(
-          height: 60,
-          child: CustomPaint(
-            size: Size(double.infinity, 60),
-            painter: TimelineSliderPainter(
-              totalDays: totalDays,
-              startDays: startDays,
-              endDays: endDays,
-              selectedColor: Theme.of(context).primaryColor,
-            ),
-          ),
-        ),
-        
-        // Range Slider
-        RangeSlider(
-          values: RangeValues(
-            startDays.toDouble(),
-            endDays.toDouble(),
-          ),
-          max: totalDays.toDouble(),
-          divisions: totalDays > 0 ? totalDays : 1,
-          labels: RangeLabels(
-            '${startDate.day}/${startDate.month}',
-            '${endDate.day}/${endDate.month}',
-          ),
-          onChanged: (RangeValues values) {
-            final newStartDate = earliestDate.add(Duration(days: values.start.round()));
-            final newEndDate = earliestDate.add(Duration(days: values.end.round()));
-            onRangeChanged(newStartDate, newEndDate);
-          },
-          activeColor: Theme.of(context).primaryColor,
-          inactiveColor: Colors.grey.withValues(alpha: 0.3),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTimelineIndicators(DateTime earliest, DateTime latest) {
-    final months = <DateTime>[];
-    var current = DateTime(earliest.year, earliest.month, 1);
-    final end = DateTime(latest.year, latest.month + 1, 1);
-    
-    while (current.isBefore(end)) {
-      months.add(current);
-      current = DateTime(current.year, current.month + 1, 1);
-    }
-
-    return Container(
-      height: 30,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: months.take(5).map((month) {
-          return Column(
-            children: [
-              Container(
-                width: 2,
-                height: 8,
-                color: Colors.grey[400],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${month.month}/${month.year}',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
 
   int _getEntriesInRange(List entries, DateTime start, DateTime end) {
     return entries.where((entry) {
@@ -1318,33 +1104,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }).length;
   }
 
-  Widget _buildDateTile(String label, DateTime date, VoidCallback onTap) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        title: Text(
-          '$label: ${date.day}/${date.month}/${date.year}',
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        trailing: Icon(
-          Icons.calendar_today_outlined,
-          color: Theme.of(context).primaryColor,
-          size: 20,
-        ),
-        onTap: onTap,
-        dense: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
-  }
 
   Widget _buildIPhoneStyleSettingTile({
     required IconData icon,
@@ -1571,10 +1330,6 @@ class TimelineSliderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round;
-
     final trackY = size.height / 2;
     final trackPaint = Paint()
       ..color = Colors.grey.withValues(alpha: 0.2)

@@ -53,7 +53,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
         final isVerySmall = screenWidth < 450;
         final crossAxisCount = 1; // Always 2 columns as requested
         final aspectRatio = isVerySmall ? 2.8 : 2.2;
-        final cardHeight = isVerySmall ? 90.0 : 110.0;
         final spacing = isVerySmall ? 8.0 : 12.0;
         
         return GridView.count(
@@ -88,7 +87,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               _buildStatCard(
                 '⛽ Avg L/100km',
                 summary.averageLitersPer100Km > 0 
-                    ? '${summary.averageLitersPer100Km.toStringAsFixed(1)}'
+                    ? summary.averageLitersPer100Km.toStringAsFixed(1)
                     : 'N/A',
                 Icons.eco_outlined,
                 Colors.purple,
@@ -166,7 +165,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final hasMore = allEntries.length > 5;
     final screenWidth = MediaQuery.of(context).size.width;
     final isVerySmall = screenWidth < 350;
-    final isSmall = screenWidth < 600;
     
     return Container(
       decoration: BoxDecoration(
@@ -265,7 +263,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
             Text(
               _showAllEntries 
                   ? 'Show Less'
-                  : 'See All ${totalEntries} Entries',
+                  : 'See All $totalEntries Entries',
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,

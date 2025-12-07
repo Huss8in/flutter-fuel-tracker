@@ -22,11 +22,9 @@ class _SimpleSwipeCardState extends State<SimpleSwipeCard>
     with SingleTickerProviderStateMixin {
   bool _showButtons = false;
   late AnimationController _animationController;
-  late Animation<double> _slideAnimation;
   late Animation<double> _scaleAnimation;
   Timer? _autoHideTimer;
   double _dragDistance = 0;
-  bool _isDragging = false;
 
   @override
   void initState() {
@@ -35,13 +33,6 @@ class _SimpleSwipeCardState extends State<SimpleSwipeCard>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _slideAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 0.98,
@@ -94,7 +85,6 @@ class _SimpleSwipeCardState extends State<SimpleSwipeCard>
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       child: GestureDetector(
         onPanStart: (details) {
-          _isDragging = true;
           _autoHideTimer?.cancel();
         },
         onPanUpdate: (details) {
@@ -109,7 +99,6 @@ class _SimpleSwipeCardState extends State<SimpleSwipeCard>
           }
         },
         onPanEnd: (details) {
-          _isDragging = false;
           final velocity = details.velocity.pixelsPerSecond.dx;
           
           // Apple-like gesture logic
