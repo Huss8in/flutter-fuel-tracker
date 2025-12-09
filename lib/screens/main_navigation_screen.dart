@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/fuel_provider.dart';
 import '../utils/date_range.dart';
 import 'summary_screen.dart';
@@ -16,16 +17,13 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const SummaryScreen(),
-    const LogsScreen(),
-  ];
+  final List<Widget> _screens = [const SummaryScreen(), const LogsScreen()];
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isVerySmallScreen = screenWidth < 350;
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: _buildAppleStyleAppBar(),
@@ -34,9 +32,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const AddFuelEntryScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const AddFuelEntryScreen()),
           );
         },
         backgroundColor: Theme.of(context).primaryColor,
@@ -51,7 +47,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   PreferredSizeWidget _buildAppleStyleAppBar() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
-    
+
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -91,12 +87,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                      color: Theme.of(
+                        context,
+                      ).primaryColor.withValues(alpha: 0.2),
                       width: 0.8,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                        color: Theme.of(
+                          context,
+                        ).primaryColor.withValues(alpha: 0.1),
                         spreadRadius: 0,
                         blurRadius: 8,
                         offset: const Offset(0, 2),
@@ -121,21 +121,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
               ],
             ),
-            
+
             SizedBox(height: isSmallScreen ? 8 : 10),
-            
+
             // Bottom line - Date Filter (left) and Car Info + Settings (right)
             Row(
               children: [
                 // Left side - Date Filter
-                Expanded(
-                  child: Row(
-                    children: [
-                      _buildAppleDateFilter(),
-                    ],
-                  ),
-                ),
-                
+                Expanded(child: Row(children: [_buildAppleDateFilter()])),
+
                 // Right side - Car Info and Settings
                 Row(
                   children: [
@@ -144,9 +138,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       icon: Icons.directions_car_outlined,
                       onTap: () => _showCarInfoDialog(),
                     ),
-                    
+
                     SizedBox(width: isSmallScreen ? 8 : 10),
-                    
+
                     // Settings Button
                     _buildAppleIconButton(
                       icon: Icons.settings_outlined,
@@ -167,7 +161,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     required VoidCallback onTap,
   }) {
     final isSmallScreen = MediaQuery.of(context).size.width < 400;
-    
+
     return Container(
       width: isSmallScreen ? 36 : 40,
       height: isSmallScreen ? 36 : 40,
@@ -199,7 +193,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       builder: (context, fuelProvider, child) {
         final screenWidth = MediaQuery.of(context).size.width;
         final isSmallScreen = screenWidth < 400;
-        
+
         return GestureDetector(
           onTap: () {
             if (fuelProvider.selectedDateRange == DateRange.custom) {
@@ -267,7 +261,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _showSettingsDialog() {
     bool isDarkMode = false; // TODO: Get from provider
     String selectedLanguage = 'English'; // TODO: Get from provider
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -293,11 +287,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.settings,
-                  color: Colors.grey,
-                  size: 24,
-                ),
+                child: const Icon(Icons.settings, color: Colors.grey, size: 24),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -349,9 +339,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   isLast: true,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Language Setting - iPhone Style
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -375,11 +365,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         color: Colors.grey[400],
                         size: 20,
                       ),
-                      onTap: () => _showLanguageSelector(context, selectedLanguage, (newLang) {
-                        setState(() {
-                          selectedLanguage = newLang;
-                        });
-                      }),
+                      onTap: () => _showLanguageSelector(
+                        context,
+                        selectedLanguage,
+                        (newLang) {
+                          setState(() {
+                            selectedLanguage = newLang;
+                          });
+                        },
+                      ),
                       isFirst: true,
                       isLast: false,
                     ),
@@ -394,7 +388,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       title: 'Current Language',
                       subtitle: selectedLanguage,
                       trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -414,13 +411,98 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 16),
+
+              // Logout Section - iPhone Style
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.red.withValues(alpha: 0.15),
+                    width: 0.5,
+                  ),
+                ),
+                child: _buildIPhoneStyleSettingTile(
+                  icon: Icons.logout_outlined,
+                  iconColor: Colors.red,
+                  title: 'Logout',
+                  subtitle: 'Sign out of your account',
+                  trailing: Icon(
+                    Icons.chevron_right,
+                    color: Colors.red[400],
+                    size: 20,
+                  ),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    // Show confirmation dialog
+                    await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        title: const Text(
+                          'Logout',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        content: const Text(
+                          'Are you sure you want to logout?',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              await FirebaseAuth.instance.signOut();
+                              if (context.mounted) {
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  '/login',
+                                  (route) => false,
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Logout',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  isFirst: true,
+                  isLast: true,
+                ),
+              ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -445,9 +527,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
@@ -484,13 +564,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildCarInfoItem('Model', 'Not Set', Icons.directions_car_outlined),
+            _buildCarInfoItem(
+              'Model',
+              'Not Set',
+              Icons.directions_car_outlined,
+            ),
             const SizedBox(height: 12),
             _buildCarInfoItem('Year', 'Not Set', Icons.calendar_today_outlined),
             const SizedBox(height: 12),
             _buildCarInfoItem('Engine', 'Not Set', Icons.settings_outlined),
             const SizedBox(height: 12),
-            _buildCarInfoItem('Tank Size', 'Not Set', Icons.local_gas_station_outlined),
+            _buildCarInfoItem(
+              'Tank Size',
+              'Not Set',
+              Icons.local_gas_station_outlined,
+            ),
           ],
         ),
         actions: [
@@ -526,9 +614,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             child: const Text(
               'Edit Info',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -549,11 +635,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: Colors.grey[600],
-          ),
+          Icon(icon, size: 20, color: Colors.grey[600]),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -589,9 +671,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     showMenu(
       context: context,
       position: const RelativeRect.fromLTRB(50, 70, 0, 0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 8,
       items: DateRange.values.map((range) {
         return PopupMenuItem<DateRange>(
@@ -639,16 +719,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     });
   }
 
-
   Widget _buildAppleStyleBottomNav() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isVerySmallScreen = screenWidth < 350;
     final isSmallScreen = screenWidth < 400;
-    
+
     return SafeArea(
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: isVerySmallScreen ? 60 : isSmallScreen ? 65 : 70,
+          maxHeight: isVerySmallScreen
+              ? 60
+              : isSmallScreen
+              ? 65
+              : 70,
           minHeight: isVerySmallScreen ? 55 : 60,
         ),
         decoration: BoxDecoration(
@@ -669,68 +752,109 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ],
         ),
         child: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey[500],
-        selectedFontSize: isVerySmallScreen ? 8 : isSmallScreen ? 9 : 12,
-        unselectedFontSize: isVerySmallScreen ? 8 : isSmallScreen ? 9 : 12,
-        selectedLabelStyle: TextStyle(
-          fontWeight: FontWeight.w600,
-          letterSpacing: isVerySmallScreen ? 0 : isSmallScreen ? -0.1 : -0.2,
-          fontSize: isVerySmallScreen ? 8 : isSmallScreen ? 9 : 12,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: isVerySmallScreen ? 8 : isSmallScreen ? 9 : 12,
-          letterSpacing: isVerySmallScreen ? 0 : isSmallScreen ? -0.1 : 0,
-        ),
-        selectedIconTheme: IconThemeData(
-          size: isVerySmallScreen ? 18 : isSmallScreen ? 20 : 24,
-        ),
-        unselectedIconTheme: IconThemeData(
-          size: isVerySmallScreen ? 18 : isSmallScreen ? 20 : 24,
-        ),
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home_outlined),
-            activeIcon: const Icon(Icons.home),
-            label: MediaQuery.of(context).size.width < 350 
-                ? 'Home' 
-                : MediaQuery.of(context).size.width < 400 
-                  ? 'Summary' 
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: Theme.of(context).primaryColor,
+          unselectedItemColor: Colors.grey[500],
+          selectedFontSize: isVerySmallScreen
+              ? 8
+              : isSmallScreen
+              ? 9
+              : 12,
+          unselectedFontSize: isVerySmallScreen
+              ? 8
+              : isSmallScreen
+              ? 9
+              : 12,
+          selectedLabelStyle: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: isVerySmallScreen
+                ? 0
+                : isSmallScreen
+                ? -0.1
+                : -0.2,
+            fontSize: isVerySmallScreen
+                ? 8
+                : isSmallScreen
+                ? 9
+                : 12,
+          ),
+          unselectedLabelStyle: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: isVerySmallScreen
+                ? 8
+                : isSmallScreen
+                ? 9
+                : 12,
+            letterSpacing: isVerySmallScreen
+                ? 0
+                : isSmallScreen
+                ? -0.1
+                : 0,
+          ),
+          selectedIconTheme: IconThemeData(
+            size: isVerySmallScreen
+                ? 18
+                : isSmallScreen
+                ? 20
+                : 24,
+          ),
+          unselectedIconTheme: IconThemeData(
+            size: isVerySmallScreen
+                ? 18
+                : isSmallScreen
+                ? 20
+                : 24,
+          ),
+          items: [
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home),
+              label: MediaQuery.of(context).size.width < 350
+                  ? 'Home'
+                  : MediaQuery.of(context).size.width < 400
+                  ? 'Summary'
                   : 'Summary',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_outlined),
-            activeIcon: Icon(Icons.list_alt),
-            label: 'Logs',
-          ),
-        ],
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.list_alt_outlined),
+              activeIcon: Icon(Icons.list_alt),
+              label: 'Logs',
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _showAppleStyleDateRangeDialog(BuildContext context, FuelProvider provider) {
+  void _showAppleStyleDateRangeDialog(
+    BuildContext context,
+    FuelProvider provider,
+  ) {
     // Get all available dates from entries
-    final allDates = provider.entries.map((e) => DateTime(e.date.year, e.date.month, e.date.day)).toSet().toList()
-      ..sort();
-    
+    final allDates =
+        provider.entries
+            .map((e) => DateTime(e.date.year, e.date.month, e.date.day))
+            .toSet()
+            .toList()
+          ..sort();
+
     if (allDates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('No fuel entries available'),
           backgroundColor: Colors.orange[600],
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -738,7 +862,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     final earliestDate = allDates.first;
     final latestDate = allDates.last;
-    
+
     DateTime startDate = provider.customStartDate ?? earliestDate;
     DateTime endDate = provider.customEndDate ?? latestDate;
 
@@ -810,7 +934,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         ),
                       ),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
@@ -877,7 +1004,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         ),
                       ),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
@@ -938,9 +1068,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Range Slider Only
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
@@ -948,13 +1078,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   activeTrackColor: Theme.of(context).primaryColor,
                   inactiveTrackColor: Colors.grey.withValues(alpha: 0.2),
                   thumbColor: Colors.white,
-                  overlayColor: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                  overlayColor: Theme.of(
+                    context,
+                  ).primaryColor.withValues(alpha: 0.15),
                   thumbShape: const RoundSliderThumbShape(
                     enabledThumbRadius: 12,
                     elevation: 3,
                     pressedElevation: 6,
                   ),
-                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 20,
+                  ),
                   rangeThumbShape: const RoundRangeSliderThumbShape(
                     enabledThumbRadius: 12,
                     elevation: 3,
@@ -968,22 +1102,28 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     endDate.difference(earliestDate).inDays.toDouble(),
                   ),
                   max: latestDate.difference(earliestDate).inDays.toDouble(),
-                  divisions: latestDate.difference(earliestDate).inDays > 0 ? latestDate.difference(earliestDate).inDays : 1,
+                  divisions: latestDate.difference(earliestDate).inDays > 0
+                      ? latestDate.difference(earliestDate).inDays
+                      : 1,
                   labels: RangeLabels(
                     '${startDate.day}/${startDate.month}',
                     '${endDate.day}/${endDate.month}',
                   ),
                   onChanged: (RangeValues values) {
                     setState(() {
-                      startDate = earliestDate.add(Duration(days: values.start.round()));
-                      endDate = earliestDate.add(Duration(days: values.end.round()));
+                      startDate = earliestDate.add(
+                        Duration(days: values.start.round()),
+                      );
+                      endDate = earliestDate.add(
+                        Duration(days: values.end.round()),
+                      );
                     });
                   },
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Enhanced Summary
               Container(
                 padding: const EdgeInsets.all(16),
@@ -998,7 +1138,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -1007,7 +1149,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                        color: Theme.of(
+                          context,
+                        ).primaryColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -1052,7 +1196,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1073,7 +1220,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1081,9 +1231,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               ),
               child: const Text(
                 'Apply',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -1092,18 +1240,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-
-
-
-
-
   int _getEntriesInRange(List entries, DateTime start, DateTime end) {
     return entries.where((entry) {
       return entry.date.isAfter(start.subtract(const Duration(days: 1))) &&
-             entry.date.isBefore(end.add(const Duration(days: 1)));
+          entry.date.isBefore(end.add(const Duration(days: 1)));
     }).length;
   }
-
 
   Widget _buildIPhoneStyleSettingTile({
     required IconData icon,
@@ -1141,11 +1283,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 18,
-                ),
+                child: Icon(icon, color: iconColor, size: 18),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1180,13 +1318,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  void _showLanguageSelector(BuildContext context, String currentLanguage, Function(String) onLanguageChanged) {
+  void _showLanguageSelector(
+    BuildContext context,
+    String currentLanguage,
+    Function(String) onLanguageChanged,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
@@ -1202,11 +1342,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.language,
-                color: Colors.blue,
-                size: 24,
-              ),
+              child: const Icon(Icons.language, color: Colors.blue, size: 24),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -1256,9 +1392,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             child: const Text(
               'Cancel',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -1266,13 +1400,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  Widget _buildLanguageOption(String name, String code, String flag, bool isSelected, VoidCallback onTap) {
+  Widget _buildLanguageOption(
+    String name,
+    String code,
+    String flag,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return Container(
       decoration: BoxDecoration(
-        color: isSelected ? Colors.blue.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.03),
+        color: isSelected
+            ? Colors.blue.withValues(alpha: 0.05)
+            : Colors.grey.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ? Colors.blue.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.1),
+          color: isSelected
+              ? Colors.blue.withValues(alpha: 0.2)
+              : Colors.grey.withValues(alpha: 0.1),
           width: isSelected ? 1.5 : 0.5,
         ),
       ),
@@ -1285,27 +1429,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Text(
-                  flag,
-                  style: const TextStyle(fontSize: 24),
-                ),
+                Text(flag, style: const TextStyle(fontSize: 24)),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     name,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       color: isSelected ? Colors.blue[700] : Colors.grey[800],
                     ),
                   ),
                 ),
                 if (isSelected)
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.blue[600],
-                    size: 24,
-                  ),
+                  Icon(Icons.check_circle, color: Colors.blue[600], size: 24),
               ],
             ),
           ),
@@ -1337,17 +1476,13 @@ class TimelineSliderPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     // Draw background track
-    canvas.drawLine(
-      Offset(0, trackY),
-      Offset(size.width, trackY),
-      trackPaint,
-    );
+    canvas.drawLine(Offset(0, trackY), Offset(size.width, trackY), trackPaint);
 
     // Draw selected range
     if (totalDays > 0) {
       final startX = (startDays / totalDays) * size.width;
       final endX = (endDays / totalDays) * size.width;
-      
+
       // Draw selected range line
       final selectedPaint = Paint()
         ..shader = LinearGradient(
@@ -1370,7 +1505,7 @@ class TimelineSliderPainter extends CustomPainter {
       final handlePaint = Paint()
         ..color = Colors.white
         ..style = PaintingStyle.fill;
-      
+
       final borderPaint = Paint()
         ..color = selectedColor
         ..style = PaintingStyle.stroke
@@ -1379,7 +1514,7 @@ class TimelineSliderPainter extends CustomPainter {
       // Start handle
       canvas.drawCircle(Offset(startX, trackY), 12, handlePaint);
       canvas.drawCircle(Offset(startX, trackY), 12, borderPaint);
-      
+
       // End handle
       canvas.drawCircle(Offset(endX, trackY), 12, handlePaint);
       canvas.drawCircle(Offset(endX, trackY), 12, borderPaint);
@@ -1388,7 +1523,7 @@ class TimelineSliderPainter extends CustomPainter {
       final innerPaint = Paint()
         ..color = selectedColor
         ..style = PaintingStyle.fill;
-        
+
       canvas.drawCircle(Offset(startX, trackY), 4, innerPaint);
       canvas.drawCircle(Offset(endX, trackY), 4, innerPaint);
     }
@@ -1399,4 +1534,3 @@ class TimelineSliderPainter extends CustomPainter {
     return true;
   }
 }
-
