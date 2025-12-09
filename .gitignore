@@ -59,6 +59,6 @@ app.*.map.json
 /android/app/release
 
 # Custom ignored file
-lib/services/firebase_service.dart
-lib/services/firebase_service_dev.dart
-lib/services/firebase_service_prod.dart 
+# lib/services/firebase_service.dart
+# lib/services/firebase_service_dev.dart
+# lib/services/firebase_service_prod.dart 
