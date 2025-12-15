@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "895716190401",
+    "firebase_url": "https://fuel-tracker-61b88-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "fuel-tracker-61b88",
+    "storage_bucket": "fuel-tracker-61b88.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:895716190401:android:1425fa8c6ded1f88a84c40",
+        "android_client_info": {
+          "package_name": "com.android.fuel_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxRfOjX1fhTaGQ3jmZiKoDVt9YU8xbqkQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:895716190401:android:79acce04eae016afa84c40",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxRfOjX1fhTaGQ3jmZiKoDVt9YU8xbqkQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
