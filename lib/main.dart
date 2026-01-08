@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'providers/fuel_provider.dart';
+import 'providers/maintenance_provider.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
@@ -19,8 +20,11 @@ class FuelTrackerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => FuelProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => FuelProvider()),
+        ChangeNotifierProvider(create: (context) => MaintenanceProvider()),
+      ],
       child: MaterialApp(
         title: 'Fuel Tracker',
         theme: ThemeData(

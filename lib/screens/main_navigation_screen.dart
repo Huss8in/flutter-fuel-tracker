@@ -5,6 +5,7 @@ import '../providers/fuel_provider.dart';
 import '../utils/date_range.dart';
 import 'summary_screen.dart';
 import 'logs_screen.dart';
+import 'maintenance_screen.dart';
 import 'add_fuel_entry_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -17,7 +18,11 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [const SummaryScreen(), const LogsScreen()];
+  final List<Widget> _screens = [
+    const SummaryScreen(),
+    const LogsScreen(),
+    const MaintenanceScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -827,6 +832,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               icon: Icon(Icons.list_alt_outlined),
               activeIcon: Icon(Icons.list_alt),
               label: 'Logs',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.build_outlined),
+              activeIcon: Icon(Icons.build),
+              label: 'Maintenance',
             ),
           ],
         ),
