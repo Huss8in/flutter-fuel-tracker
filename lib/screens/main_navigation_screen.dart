@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/fuel_provider.dart';
+import '../providers/car_provider.dart';
 import '../utils/date_range.dart';
 import 'summary_screen.dart';
 import 'logs_screen.dart';
 import 'maintenance_screen.dart';
 import 'add_fuel_entry_screen.dart';
+import 'add_car_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -531,143 +533,161 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _showCarInfoDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.blue.withValues(alpha: 0.15),
-                    Colors.blue.withValues(alpha: 0.08),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.directions_car,
-                color: Colors.blue,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Car Information',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCarInfoItem(
-              'Model',
-              'Not Set',
-              Icons.directions_car_outlined,
-            ),
-            const SizedBox(height: 12),
-            _buildCarInfoItem('Year', 'Not Set', Icons.calendar_today_outlined),
-            const SizedBox(height: 12),
-            _buildCarInfoItem('Engine', 'Not Set', Icons.settings_outlined),
-            const SizedBox(height: 12),
-            _buildCarInfoItem(
-              'Tank Size',
-              'Not Set',
-              Icons.local_gas_station_outlined,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              'Close',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // TODO: Navigate to car info edit screen
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              'Edit Info',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      builder: (context) => Consumer<CarProvider>(
+        builder: (context, carProvider, child) {
+          final cars = carProvider.cars;
+          final selectedCar = carProvider.selectedCar;
 
-  Widget _buildCarInfoItem(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.1),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
-                    letterSpacing: 0.2,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.blue.withValues(alpha: 0.15),
+                        Colors.blue.withValues(alpha: 0.08),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.directions_car,
+                    color: Colors.blue,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[800],
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Your Cars',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
+                    ),
                   ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const AddCarScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_circle, color: Colors.blue),
+                  tooltip: 'Add another car',
                 ),
               ],
             ),
-          ),
-        ],
+            content: SizedBox(
+              width: double.maxFinite,
+              child: cars.isEmpty
+                  ? const Center(child: Text('No cars found'))
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: cars.length,
+                      itemBuilder: (context, index) {
+                        final car = cars[index];
+                        final isSelected = car.id == carProvider.selectedCarId;
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.blue.withValues(alpha: 0.05)
+                                : Colors.grey.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.blue.withValues(alpha: 0.3)
+                                  : Colors.grey.withValues(alpha: 0.1),
+                              width: isSelected ? 1 : 0.5,
+                            ),
+                          ),
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.directions_car,
+                              color: isSelected ? Colors.blue : Colors.grey,
+                            ),
+                            title: Text(
+                              '${car.make} ${car.model}',
+                              style: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${car.year} • ${car.registrationNumber}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.blue,
+                                  )
+                                : null,
+                            onTap: () {
+                              carProvider.setSelectedCar(car.id!);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Close',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              if (selectedCar != null)
+                ElevatedButton(
+                  onPressed: () {
+                    // TODO: Details view or edit
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Details',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
