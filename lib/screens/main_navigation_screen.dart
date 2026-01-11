@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/fuel_provider.dart';
 import '../providers/car_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/date_range.dart';
 import 'summary_screen.dart';
 import 'logs_screen.dart';
@@ -37,10 +38,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: _buildAppleStyleBottomNav(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AddFuelEntryScreen()),
+        onPressed: () async {
+          // Check if user is authenticated before allowing to add fuel entry
+          final authProvider = Provider.of<AppAuthProvider>(
+            context,
+            listen: false,
           );
+          final canProceed = await authProvider.requireAuth(
+            context,
+            actionDescription:
+                'Sign in to add fuel entries and track your expenses.',
+          );
+          if (canProceed && context.mounted) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const AddFuelEntryScreen(),
+              ),
+            );
+          }
         },
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
@@ -421,84 +436,125 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
               const SizedBox(height: 16),
 
-              // Logout Section - iPhone Style
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.red.withValues(alpha: 0.15),
-                    width: 0.5,
-                  ),
-                ),
-                child: _buildIPhoneStyleSettingTile(
-                  icon: Icons.logout_outlined,
-                  iconColor: Colors.red,
-                  title: 'Logout',
-                  subtitle: 'Sign out of your account',
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    color: Colors.red[400],
-                    size: 20,
-                  ),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    // Show confirmation dialog
-                    await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        title: const Text(
-                          'Logout',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        content: const Text(
-                          'Are you sure you want to logout?',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              await FirebaseAuth.instance.signOut();
-                              if (context.mounted) {
-                                Navigator.of(context).pushNamedAndRemoveUntil(
-                                  '/login',
-                                  (route) => false,
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Logout',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
+              // Login/Logout Section - iPhone Style (conditional based on auth)
+              Consumer<AppAuthProvider>(
+                builder: (context, authProvider, child) {
+                  final isGuest = authProvider.isGuestMode;
+
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: isGuest
+                          ? Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.03)
+                          : Colors.red.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isGuest
+                            ? Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.15)
+                            : Colors.red.withValues(alpha: 0.15),
+                        width: 0.5,
                       ),
-                    );
-                  },
-                  isFirst: true,
-                  isLast: true,
-                ),
+                    ),
+                    child: _buildIPhoneStyleSettingTile(
+                      icon: isGuest
+                          ? Icons.login_outlined
+                          : Icons.logout_outlined,
+                      iconColor: isGuest
+                          ? Theme.of(context).primaryColor
+                          : Colors.red,
+                      title: isGuest ? 'Sign In' : 'Logout',
+                      subtitle: isGuest
+                          ? 'Sign in to save your data'
+                          : 'Sign out of your account',
+                      trailing: Icon(
+                        Icons.chevron_right,
+                        color: isGuest
+                            ? Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.7)
+                            : Colors.red[400],
+                        size: 20,
+                      ),
+                      onTap: () async {
+                        Navigator.of(context).pop();
+
+                        if (isGuest) {
+                          // Exit guest mode and go to login
+                          authProvider.exitGuestMode();
+                          if (context.mounted) {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/login',
+                              (route) => false,
+                            );
+                          }
+                        } else {
+                          // Show logout confirmation dialog
+                          await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              title: const Text(
+                                'Logout',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              content: const Text(
+                                'Are you sure you want to logout?',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    await FirebaseAuth.instance.signOut();
+                                    if (context.mounted) {
+                                      Navigator.of(
+                                        context,
+                                      ).pushNamedAndRemoveUntil(
+                                        '/login',
+                                        (route) => false,
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Logout',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                      isFirst: true,
+                      isLast: true,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -575,13 +631,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const AddCarScreen(),
-                      ),
+                  onPressed: () async {
+                    // Check auth before allowing to add a car
+                    final authProvider = Provider.of<AppAuthProvider>(
+                      context,
+                      listen: false,
                     );
+                    final canProceed = await authProvider.requireAuth(
+                      context,
+                      actionDescription: 'Sign in to add and manage your cars.',
+                    );
+                    if (canProceed && context.mounted) {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const AddCarScreen(),
+                        ),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.add_circle, color: Colors.blue),
                   tooltip: 'Add another car',
