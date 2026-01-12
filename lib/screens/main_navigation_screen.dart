@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/fuel_provider.dart';
+import '../providers/car_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/date_range.dart';
 import 'summary_screen.dart';
 import 'logs_screen.dart';
+import 'maintenance_screen.dart';
 import 'add_fuel_entry_screen.dart';
+import 'add_car_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -17,7 +21,11 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [const SummaryScreen(), const LogsScreen()];
+  final List<Widget> _screens = [
+    const SummaryScreen(),
+    const LogsScreen(),
+    const MaintenanceScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +38,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: _buildAppleStyleBottomNav(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AddFuelEntryScreen()),
+        onPressed: () async {
+          // Check if user is authenticated before allowing to add fuel entry
+          final authProvider = Provider.of<AppAuthProvider>(
+            context,
+            listen: false,
           );
+          final canProceed = await authProvider.requireAuth(
+            context,
+            actionDescription:
+                'Sign in to add fuel entries and track your expenses.',
+          );
+          if (canProceed && context.mounted) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const AddFuelEntryScreen(),
+              ),
+            );
+          }
         },
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
@@ -414,84 +436,125 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
               const SizedBox(height: 16),
 
-              // Logout Section - iPhone Style
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.red.withValues(alpha: 0.15),
-                    width: 0.5,
-                  ),
-                ),
-                child: _buildIPhoneStyleSettingTile(
-                  icon: Icons.logout_outlined,
-                  iconColor: Colors.red,
-                  title: 'Logout',
-                  subtitle: 'Sign out of your account',
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    color: Colors.red[400],
-                    size: 20,
-                  ),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    // Show confirmation dialog
-                    await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        title: const Text(
-                          'Logout',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        content: const Text(
-                          'Are you sure you want to logout?',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              await FirebaseAuth.instance.signOut();
-                              if (context.mounted) {
-                                Navigator.of(context).pushNamedAndRemoveUntil(
-                                  '/login',
-                                  (route) => false,
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Logout',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
+              // Login/Logout Section - iPhone Style (conditional based on auth)
+              Consumer<AppAuthProvider>(
+                builder: (context, authProvider, child) {
+                  final isGuest = authProvider.isGuestMode;
+
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: isGuest
+                          ? Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.03)
+                          : Colors.red.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isGuest
+                            ? Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.15)
+                            : Colors.red.withValues(alpha: 0.15),
+                        width: 0.5,
                       ),
-                    );
-                  },
-                  isFirst: true,
-                  isLast: true,
-                ),
+                    ),
+                    child: _buildIPhoneStyleSettingTile(
+                      icon: isGuest
+                          ? Icons.login_outlined
+                          : Icons.logout_outlined,
+                      iconColor: isGuest
+                          ? Theme.of(context).primaryColor
+                          : Colors.red,
+                      title: isGuest ? 'Sign In' : 'Logout',
+                      subtitle: isGuest
+                          ? 'Sign in to save your data'
+                          : 'Sign out of your account',
+                      trailing: Icon(
+                        Icons.chevron_right,
+                        color: isGuest
+                            ? Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.7)
+                            : Colors.red[400],
+                        size: 20,
+                      ),
+                      onTap: () async {
+                        Navigator.of(context).pop();
+
+                        if (isGuest) {
+                          // Exit guest mode and go to login
+                          authProvider.exitGuestMode();
+                          if (context.mounted) {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/login',
+                              (route) => false,
+                            );
+                          }
+                        } else {
+                          // Show logout confirmation dialog
+                          await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              title: const Text(
+                                'Logout',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              content: const Text(
+                                'Are you sure you want to logout?',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    await FirebaseAuth.instance.signOut();
+                                    if (context.mounted) {
+                                      Navigator.of(
+                                        context,
+                                      ).pushNamedAndRemoveUntil(
+                                        '/login',
+                                        (route) => false,
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Logout',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                      isFirst: true,
+                      isLast: true,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -526,143 +589,172 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _showCarInfoDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.blue.withValues(alpha: 0.15),
-                    Colors.blue.withValues(alpha: 0.08),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.directions_car,
-                color: Colors.blue,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Car Information',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCarInfoItem(
-              'Model',
-              'Not Set',
-              Icons.directions_car_outlined,
-            ),
-            const SizedBox(height: 12),
-            _buildCarInfoItem('Year', 'Not Set', Icons.calendar_today_outlined),
-            const SizedBox(height: 12),
-            _buildCarInfoItem('Engine', 'Not Set', Icons.settings_outlined),
-            const SizedBox(height: 12),
-            _buildCarInfoItem(
-              'Tank Size',
-              'Not Set',
-              Icons.local_gas_station_outlined,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              'Close',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // TODO: Navigate to car info edit screen
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              'Edit Info',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      builder: (context) => Consumer<CarProvider>(
+        builder: (context, carProvider, child) {
+          final cars = carProvider.cars;
+          final selectedCar = carProvider.selectedCar;
 
-  Widget _buildCarInfoItem(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.1),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
-                    letterSpacing: 0.2,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.blue.withValues(alpha: 0.15),
+                        Colors.blue.withValues(alpha: 0.08),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.directions_car,
+                    color: Colors.blue,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[800],
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Your Cars',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
+                    ),
                   ),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    // Check auth before allowing to add a car
+                    final authProvider = Provider.of<AppAuthProvider>(
+                      context,
+                      listen: false,
+                    );
+                    final canProceed = await authProvider.requireAuth(
+                      context,
+                      actionDescription: 'Sign in to add and manage your cars.',
+                    );
+                    if (canProceed && context.mounted) {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const AddCarScreen(),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.add_circle, color: Colors.blue),
+                  tooltip: 'Add another car',
                 ),
               ],
             ),
-          ),
-        ],
+            content: SizedBox(
+              width: double.maxFinite,
+              child: cars.isEmpty
+                  ? const Center(child: Text('No cars found'))
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: cars.length,
+                      itemBuilder: (context, index) {
+                        final car = cars[index];
+                        final isSelected = car.id == carProvider.selectedCarId;
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.blue.withValues(alpha: 0.05)
+                                : Colors.grey.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.blue.withValues(alpha: 0.3)
+                                  : Colors.grey.withValues(alpha: 0.1),
+                              width: isSelected ? 1 : 0.5,
+                            ),
+                          ),
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.directions_car,
+                              color: isSelected ? Colors.blue : Colors.grey,
+                            ),
+                            title: Text(
+                              '${car.make} ${car.model}',
+                              style: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${car.year} • ${car.registrationNumber}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.blue,
+                                  )
+                                : null,
+                            onTap: () {
+                              carProvider.setSelectedCar(car.id!);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Close',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              if (selectedCar != null)
+                ElevatedButton(
+                  onPressed: () {
+                    // TODO: Details view or edit
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Details',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -827,6 +919,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               icon: Icon(Icons.list_alt_outlined),
               activeIcon: Icon(Icons.list_alt),
               label: 'Logs',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.build_outlined),
+              activeIcon: Icon(Icons.build),
+              label: 'Maintenance',
             ),
           ],
         ),

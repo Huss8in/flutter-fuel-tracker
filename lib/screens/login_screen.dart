@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -367,6 +369,49 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Continue as Guest Button
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        // Enter guest mode and navigate to dashboard
+                        Provider.of<AppAuthProvider>(
+                          context,
+                          listen: false,
+                        ).enterGuestMode();
+                      },
+                      icon: Icon(
+                        Icons.explore_outlined,
+                        color: Colors.grey[600],
+                        size: 20,
+                      ),
+                      label: Text(
+                        'Continue as Guest',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Guest mode info text
+                  Text(
+                    'Preview the app with sample data',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
                   ),
                 ],
               ),
